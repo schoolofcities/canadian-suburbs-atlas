@@ -4,12 +4,12 @@
     "cmaname": "All CMAs",
     "x": -97,
     "y": 50,
-    "active": 0,
-    "transit": 0,
-    "auto": 1,
-    "exurban": 0,
+    "active": 0.135908069,
+    "transit": 0.111096396,
+    "auto": 0.672657649,
+    "exurban": 0.079973297,
     "unclassified": 0,
-    "pop2021": 15000000
+    "pop2021": 27281056
   },
   {
     "cmauid": "001",
@@ -484,7 +484,7 @@
     "cmaname": "Vancouver",
     "x": -122.8360663,
     "y": 49.28271522,
-    "active": 0.159938702,
+    "active": 0.159938701957186,
     "transit": 0.148665916,
     "auto": 0.671567735,
     "exurban": 0.019510183,

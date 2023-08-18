@@ -21,13 +21,13 @@
         
     // initial cma selected
 	let cmaSelected = 'All CMAs';
-    let selectedPop = 15000000;
-    let selectedActive = 0;
-    let selectedTransit = 0;
-    let selectedAuto = 100;
-    let selectedExurban = 0;
-    let selectedUnclassified = 0;
-    $: selectedUnclassified = (100 - selectedActive - selectedTransit - selectedAuto - selectedExurban).toFixed(2);
+    let selectedPop = 27281056;
+    let selectedActive = 13.6;
+    let selectedTransit = 11.1;
+    let selectedAuto = 67.3;
+    let selectedExurban = 8.0;
+    let selectedUnclassified = 0.0;
+    //$: selectedUnclassified = (100 - selectedActive - selectedTransit - selectedAuto - selectedExurban).toFixed(2);
 
     // create map variable to fill in with onMount
     let selectedCtuid = '';
@@ -54,10 +54,11 @@
         
         //change data values based on cma selected
         selectedPop = (filteredData.pop2021);
-        selectedActive = ((filteredData.active) * 100).toFixed(1);
-        selectedTransit = ((filteredData.transit) * 100).toFixed(1);
-        selectedAuto = ((filteredData.auto) * 100).toFixed(1);
-        selectedExurban = ((filteredData.exurban) * 100).toFixed(1);
+        selectedActive = ((filteredData.active) * 100);
+        selectedTransit = ((filteredData.transit) * 100);
+        selectedAuto = ((filteredData.auto) * 100);
+        selectedExurban = ((filteredData.exurban) * 100);
+        selectedUnclassified = ((filteredData.unclassified) * 100);
 
         // pan and zoom to the new cma - reset pitch and bearing if they changed
         if (cmaSelected !== "All CMAs") {
@@ -183,25 +184,11 @@
 
         });
 
-        map.on('click', 'suburbs-project-ct', (e) => {		
-
-			var features = map.queryRenderedFeatures(e.point, { layers: ['suburbs-project-ct'] });
-
-			if (ctuid != features[0].properties.ctuid) {
-				var style = [
-					"match",
-					["get", "ctuid"],
-					[features[0].properties.ctuid],
-					"#6D247A",
-					"#fff",
-				]
-				map.setPaintProperty('suburbs-project-ct', 'fill-outline-color', style)
-				ctuid = features[0].properties.ctuid
-			} 
+        map.on('click', 'suburbs-project-ct', () => {
+            map.setPaintProperty('suburbs-project-ct-line' , 'line-opacity' , 1.0);
+            map.setPaintProperty('suburbs-project-ct-line' , 'line-color' , 'red');
+            
 		});
-
-        map.setPaintProperty ('suburbs-project-cma' , 'fill-color' , 'red');
-
     });
 
     let isChecked = false;
@@ -277,23 +264,23 @@ function reset() {
 
                 <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
                 <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
-                <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
+                <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
 
                 <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
                 <rect class="legend-box" x="10" y="50" width="15" height="15" fill="#00A189" />
-                <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
+                <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
 
                 <rect class="legend-bar" x="30" y="70" width="{250 * selectedAuto / 100}" height="15"/>
                 <rect class="legend-box" x="10" y="70" width="15" height="15" fill="#F1C500" />
-                <text x="30" y="82" class="legend-text" font-size="12" >Auto Suburb: <tspan font-weight="bold">{selectedAuto}%</tspan> ({Math.round(selectedPop * selectedAuto / 100).toLocaleString()} people)</text>
+                <text x="30" y="82" class="legend-text" font-size="12" >Auto Suburb: <tspan font-weight="bold">{selectedAuto.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedAuto / 100).toLocaleString()} people)</text>
 
                 <rect class="legend-bar" x="30" y="90" width="{200 * selectedExurban / 100}" height="15"/>
                 <rect class="legend-box" x="10" y="90" width="15" height="15" fill="#f7f2df" />
-                <text x="30" y="102" class="legend-text" font-size="12" >Exurb: <tspan font-weight="bold">{selectedExurban}%</tspan> ({Math.round(selectedPop * selectedExurban / 100).toLocaleString()} people)</text>
+                <text x="30" y="102" class="legend-text" font-size="12" >Exurb: <tspan font-weight="bold">{selectedExurban.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedExurban / 100).toLocaleString()} people)</text>
 
                 <rect class="legend-bar" x="30" y="110" width="{200 * selectedUnclassified / 100}" height="15"/>
                 <rect class="legend-box" x="10" y="110" width="15" height="15" fill="#D0D1C9" />
-                <text x="30" y="122" class="legend-text" font-size="12" >Unclassified / No Data: <tspan font-weight="bold">{selectedUnclassified}%</tspan> ({Math.round(selectedPop * selectedUnclassified / 100).toLocaleString()} people)</text>
+                <text x="30" y="122" class="legend-text" font-size="12" >Unclassified / No Data: <tspan font-weight="bold">{selectedUnclassified.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedUnclassified / 100).toLocaleString()} people)</text>
 
             </svg>
         </div>
@@ -348,7 +335,7 @@ function reset() {
 		margin: 0px;
 		background-color: var(--brandDarkBlue);
 	}
-	
+    
     main {
 		margin: auto 0px;
         padding: 0px;
