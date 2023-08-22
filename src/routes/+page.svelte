@@ -181,14 +181,26 @@
             selectedPercActive = ((e.features[0].properties.active)*100).toFixed(1);
             selectedPercTransit = ((e.features[0].properties.transit)*100).toFixed(1);
             selectedPercAuto = ((e.features[0].properties.auto)*100).toFixed(1);
-
         });
 
-        map.on('click', 'suburbs-project-ct', () => {
-            map.setPaintProperty('suburbs-project-ct-line' , 'line-opacity' , 1.0);
-            map.setPaintProperty('suburbs-project-ct-line' , 'line-color' , 'red');
-            
+        map.on('click', 'suburbs-project-ct', (e) => {
+            map.setFilter('suburbs-project-ct-highlight',
+                [
+                "all",
+                [
+                    "match",
+                    ["get", "ctuid"],
+                    [e.features[0].properties.ctuid],
+                    true,
+                    false
+                ]
+                ]
+            )           
 		});
+
+        map.on('click', 'suburbs-project-cma-fill', (e) => {
+            $: cmaSelected = cmaSummary.filter(item => item.cmauid === parseInt(e.features[0].properties.CMAUID))[0].cmaname;
+        })
     });
 
     let isChecked = false;
@@ -208,11 +220,14 @@
     }
     };
 
-function reset() {
-    cmaX = '';
-    cmaY = '';
-    cmaSelected = '';
-}
+
+
+
+    function reset() {
+        cmaX = '';
+        cmaY = '';
+        cmaSelected = '';
+    }
  
   
 </script>
