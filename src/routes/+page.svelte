@@ -116,6 +116,14 @@
             map.getCanvas().style.cursor = '';
         });
 
+        map.on('mouseenter', 'cmaPoints', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'cmaPoints', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
         map.on('click' , 'suburbs-project-ct' , (e) => {
             selectedCtuid = e.features[0].properties.ctuid;
             selectedClass = e.features[0].properties.class;
@@ -143,7 +151,13 @@
         map.on('click', 'suburbs-project-cma-fill', (e) => {
             $: cmaSelected = cmaSummary.filter(item => item.cmauid === parseInt(e.features[0].properties.CMAUID))[0].cmaname;
         })
+
+        map.on('click', 'cmaPoints', (e) => {
+            console.log(e.features[0]);
+            $: cmaSelected = e.features[0].properties.cmaname;
+        })
     });
+
 
     // function for what to do when new cma is selected
     function handleSelect(e) {
@@ -250,7 +264,6 @@
         }
     }
 
-    
     let isChecked = false;
     function toggleCheckbox() {
         isChecked = !isChecked;
@@ -264,8 +277,6 @@
         }
     };
     
- 
-  
 </script>
 
 
@@ -284,28 +295,34 @@
             <div class="bar"></div>
 
             <p>
-                Mapping and counting how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. Select to view a specific Census Metropolitan Area (CMA).
+                Mapping where and how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. 
+            </p>
+            <p>    
+                Select to view a specific Census Metropolitan Area.
             </p>
 
             <div class="bar"></div>
 
-            <Select 
-                items={cmaAll} 
-                value={cmaSelected} 
-                clearable={false} 
-                showChevron={true} 
-                on:input={handleSelect}
-                --background="white"
-                --height="20px"
-                --item-color="black"
-                --border-radius="0"
-                --border="1px"
-                --list-border-radius="0px"
-                --font-size="15px"
-                --max-height="30px"
-                --item-is-active-color="black"
-                --item-is-active-bg="lightgrey"
-            />
+            <div id="select-wrapper">
+                <Select 
+                    id="select"
+                    items={cmaAll} 
+                    value={cmaSelected} 
+                    clearable={false} 
+                    showChevron={true} 
+                    on:input={handleSelect}
+                    --background="white"
+                    --height="20px"
+                    --item-color="black"
+                    --border-radius="0"
+                    --border="1px"
+                    --list-border-radius="0px"
+                    --font-size="15px"
+                    --max-height="30px"
+                    --item-is-active-color="black"
+                    --item-is-active-bg="lightgrey"
+                />
+            </div>
 
             <div class="bar"></div>
 
@@ -368,19 +385,17 @@
 
         <div class="bar"></div>
 
-        <p>
+            <p>
                 This map was built by Remus Herteg and Jeff Allen at the School of Cities. Code is on <a>GitHub</a>
             </p>
 
         </div>
 
         <div id="hide" on:click={toggleContent}>
-            {isContentVisible ? "Click here to hide this panel" : "Click here to show details about this project"}
+            {isContentVisible ? "Click here to hide this panel" : "Click here to show details about this map"}
         </div>
 
     </div>
-
-
 
 	<div id="map"></div>
 
@@ -457,6 +472,10 @@
         margin: 0px;
         margin-left: 5px;
         opacity: 0.25;
+    }
+
+    #select-wrapper:hover {
+        cursor: pointer;
     }
 
     #legend {
