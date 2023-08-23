@@ -2,10 +2,32 @@
 	import { onMount } from 'svelte';
 	import mapboxgl from "mapbox-gl";
     import cmaSummary from './data/cma-summary.json';
+    // import cmaPoints from './data/cma-points.geo.json';
     import Select from 'svelte-select';
 	import '../assets/global-styles.css';
 
 	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2w2Z2xhOXprMTYzczNlcHNjMnNvdGlmNCJ9.lOgVHrajc1L-LlU0as2i2A';
+
+    let cmaPoints;
+
+    // Convert JSON data to GeoJSON format
+    cmaPoints = {
+        type: 'FeatureCollection',
+        features: cmaSummary.filter(feature => feature.cmauid !== "000").map(feature => ({
+        type: 'Feature',
+        geometry: {
+            type: 'Point',
+            coordinates: [feature.x, feature.y]
+        },
+        properties: {
+            cmauid: feature.cmauid,
+            cmaname: feature.cmaname
+        }
+        }))
+    }
+
+
+    $: console.log(cmaPoints);
 
     // array of all cma names
     let cmaAll = cmaSummary
@@ -156,6 +178,31 @@
             attributionControl: false
         });
 
+        map.on('load', function () {
+            map.addLayer({
+            id: 'cmaPoints',
+            type: 'circle',
+            source: {
+                type: 'geojson',
+                data: cmaPoints
+            },
+            paint: {
+                'circle-radius': 5,
+                'circle-color': '#1E3765',
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#fff'
+            }
+            });
+        });
+
+        map.on('zoom', function () {
+          if (map.getZoom() < 5) {
+            map.setLayoutProperty('cmaPoints', 'visibility', 'visible');
+          } else {
+            map.setLayoutProperty('cmaPoints', 'visibility', 'none');
+          }
+        });
+
         map.addControl(new mapboxgl.NavigationControl(), 'top-right');
 
         const scale = new mapboxgl.ScaleControl({
@@ -244,98 +291,105 @@
 
         <h1>Canadian Suburbs Atlas</h1>
 
+            <div id="content-wrapper">
+            <div class="bar"></div>
+
+            <p>
+                Mapping and counting how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. Select to view a specific Census Metropolitan Area (CMA).
+            </p>
+
+            <div class="bar"></div>
+
+            <Select 
+                items={cmaAll} 
+                value={cmaSelected} 
+                clearable={false} 
+                showChevron={true} 
+                on:input={handleSelect}
+                --background="white"
+                --height="20px"
+                --item-color="black"
+                --border-radius="0"
+                --border="1px"
+                --list-border-radius="0px"
+                --font-size="15px"
+                --max-height="30px"
+                --item-is-active-color="black"
+                --item-is-active-bg="lightgrey"
+            />
+
+            <div class="bar"></div>
+
+            <div id="legend-wrapper">
+                <svg id="legend"  width="300" height="130">
+                    
+                    <text x="10" y="20" class="legend-text" font-size="12" >Population (2021): {selectedPop.toLocaleString()}</text>
+
+                    <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
+                    <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
+
+                    <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="50" width="15" height="15" fill="#00A189" />
+                    <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
+
+                    <rect class="legend-bar" x="30" y="70" width="{250 * selectedAuto / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="70" width="15" height="15" fill="#F1C500" />
+                    <text x="30" y="82" class="legend-text" font-size="12" >Auto Suburb: <tspan font-weight="bold">{selectedAuto.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedAuto / 100).toLocaleString()} people)</text>
+
+                    <rect class="legend-bar" x="30" y="90" width="{200 * selectedExurban / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="90" width="15" height="15" fill="#f7f2df" />
+                    <text x="30" y="102" class="legend-text" font-size="12" >Exurb: <tspan font-weight="bold">{selectedExurban.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedExurban / 100).toLocaleString()} people)</text>
+
+                    <rect class="legend-bar" x="30" y="110" width="{200 * selectedUnclassified / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="110" width="15" height="15" fill="#D0D1C9" />
+                    <text x="30" y="122" class="legend-text" font-size="12" >Unclassified / No Data: <tspan font-weight="bold">{selectedUnclassified.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedUnclassified / 100).toLocaleString()} people)</text>
+
+                </svg>
+            </div>
+
+            <div class="bar"></div>
+
+
+
+            <div id="satellite-switch">
+                <p>
+                    <input type="checkbox" on:change={toggleCheckbox}>
+                    Satellite View
+                </p>
+            </div>
+
+            <div class="bar"></div>
+
+            <div id="box">
+                <p>
+                    Selected Census Tract: {selectedCtuid}
+                    <br>
+                    Classification: <b>{selectedClass}</b>
+                    <br>
+                    Population (2021): {parseInt(selectedCtPop).toLocaleString()}
+                    <br>
+                    Mode Share (Journey to Work):
+                    <br>
+                    Active: {selectedPercActive}% |
+                    Transit: {selectedPercTransit}% |
+                    Auto: {selectedPercAuto}%  
+                </p>
+        </div>
+
         <div class="bar"></div>
 
         <p>
-            This map visualizes how suburbanized Canadian cities are. Read about the methods <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. Select below to view a map and stats for a specific Census Metropolitan Area (CMA).
-        </p>
+                This map was built by Remus Herteg and Jeff Allen at the School of Cities. Code is on <a>GitHub</a>
+            </p>
 
-        <div class="bar"></div>
-
-        <Select 
-            items={cmaAll} 
-            value={cmaSelected} 
-            clearable={false} 
-            showChevron={true} 
-            on:input={handleSelect}
-            --background="white"
-            --height="20px"
-            --item-color="black"
-            --border-radius="0"
-            --border="1px"
-            --list-border-radius="0px"
-            --font-size="15px"
-            --max-height="30px"
-            --item-is-active-color="black"
-            --item-is-active-bg="lightgrey"
-        />
-
-        <div class="bar"></div>
-
-        <div id="legend-wrapper">
-            <svg id="legend"  width="300" height="130">
-                
-                <text x="10" y="20" class="legend-text" font-size="12" >Population (2021): {selectedPop.toLocaleString()}</text>
-
-                <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
-                <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
-
-                <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="50" width="15" height="15" fill="#00A189" />
-                <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
-
-                <rect class="legend-bar" x="30" y="70" width="{250 * selectedAuto / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="70" width="15" height="15" fill="#F1C500" />
-                <text x="30" y="82" class="legend-text" font-size="12" >Auto Suburb: <tspan font-weight="bold">{selectedAuto.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedAuto / 100).toLocaleString()} people)</text>
-
-                <rect class="legend-bar" x="30" y="90" width="{200 * selectedExurban / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="90" width="15" height="15" fill="#f7f2df" />
-                <text x="30" y="102" class="legend-text" font-size="12" >Exurb: <tspan font-weight="bold">{selectedExurban.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedExurban / 100).toLocaleString()} people)</text>
-
-                <rect class="legend-bar" x="30" y="110" width="{200 * selectedUnclassified / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="110" width="15" height="15" fill="#D0D1C9" />
-                <text x="30" y="122" class="legend-text" font-size="12" >Unclassified / No Data: <tspan font-weight="bold">{selectedUnclassified.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedUnclassified / 100).toLocaleString()} people)</text>
-
-            </svg>
         </div>
 
-        <div class="bar"></div>
-
-
-
-        <div id="satellite-switch">
-            <p>
-                <input type="checkbox" on:change={toggleCheckbox}>
-                Satellite View
-            </p>
-        </div>
-
-        <div class="bar"></div>
-
-        <div id="box">
-            <p>
-                Selected Census Tract: {selectedCtuid}
-                <br>
-                Classification: <b>{selectedClass}</b>
-                <br>
-                Population (2021): {parseInt(selectedCtPop).toLocaleString()}
-                <br>
-                Mode Share (Journey to Work):
-                <br>
-                Active: {selectedPercActive}% |
-                Transit: {selectedPercTransit}% |
-                Auto: {selectedPercAuto}%  
-            </p>
-       </div>
-
-       <div class="bar"></div>
-
-       <p>
-            This map was built by Remus Herteg and Jeff Allen at the School of Cities. Code is on <a>GitHub</a>
-        </p>
+        <div id="hide">^ Hide Information ^</div>
 
     </div>
+
+
 
 	<div id="map"></div>
 
