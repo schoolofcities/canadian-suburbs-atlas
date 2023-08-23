@@ -2,21 +2,19 @@
 	import { onMount } from 'svelte';
 	import mapboxgl from "mapbox-gl";
     import cmaSummary from './data/cma-summary.json';
-    // import cmaPoints from './data/cma-points.geo.json';
     import Select from 'svelte-select';
 	import '../assets/global-styles.css';
 
 	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2w2Z2xhOXprMTYzczNlcHNjMnNvdGlmNCJ9.lOgVHrajc1L-LlU0as2i2A';
 
-    let isContentVisible = true; // This variable will track whether the content is visible or not
-
+    // for toggling the visibility of the panel
+    let isContentVisible = true;
     function toggleContent() {
-        isContentVisible = !isContentVisible; // Toggle the visibility state
+        isContentVisible = !isContentVisible;
     }
 
+    // creating a geojson for points of CMAs (when zoomed out)
     let cmaPoints;
-
-    // Convert JSON data to GeoJSON format
     cmaPoints = {
         type: 'FeatureCollection',
         features: cmaSummary.filter(feature => feature.cmauid !== "000").map(feature => ({
@@ -31,7 +29,6 @@
         }
         }))
     }
-
 
     // array of all cma names
     let cmaAll = cmaSummary
@@ -53,17 +50,100 @@
     let selectedAuto = 67.3;
     let selectedExurban = 8.0;
     let selectedUnclassified = 0.0;
-    //$: selectedUnclassified = (100 - selectedActive - selectedTransit - selectedAuto - selectedExurban).toFixed(2);
 
-    // create map variable to fill in with onMount
+    // empty selected ctuid variables
     let selectedCtuid = '';
     let selectedClass = '';
     let selectedCtPop = ''
     let selectedPercActive =''
     let selectedPercTransit =''
     let selectedPercAuto = ''
-    let ctuid = '0';
 
+    
+
+    onMount(() => {
+        map = new mapboxgl.Map({
+            container: 'map', 
+            style: 'mapbox://styles/schoolofcities/cli0otj3n04m601pa9s0s0mc4',
+            center: [-97, 55], 
+            zoom: 3,
+            maxZoom: 14,
+            minZoom: 2,
+            scrollZoom: true,
+            attributionControl: false
+        });
+
+        map.on('load', function () {
+            map.addLayer({
+            id: 'cmaPoints',
+            type: 'circle',
+            source: {
+                type: 'geojson',
+                data: cmaPoints
+            },
+            paint: {
+                'circle-radius': 6,
+                'circle-color': '#AB1368',
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#fff'
+            }
+            });
+        });
+
+        map.on('zoom', function () {
+          if (map.getZoom() < 5) {
+            map.setLayoutProperty('cmaPoints', 'visibility', 'visible');
+          } else {
+            map.setLayoutProperty('cmaPoints', 'visibility', 'none');
+          }
+        });
+
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        const scale = new mapboxgl.ScaleControl({
+            maxWidth: 100,
+            unit: 'metric'
+            });
+
+        map.addControl(scale, 'bottom-right');
+
+        // Mouse functions
+        map.on('mouseenter', 'suburbs-project-ct', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'suburbs-project-ct', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
+        map.on('click' , 'suburbs-project-ct' , (e) => {
+            selectedCtuid = e.features[0].properties.ctuid;
+            selectedClass = e.features[0].properties.class;
+            selectedCtPop = (e.features[0].properties.pop2021);
+            selectedPercActive = ((e.features[0].properties.active)*100).toFixed(1);
+            selectedPercTransit = ((e.features[0].properties.transit)*100).toFixed(1);
+            selectedPercAuto = ((e.features[0].properties.auto)*100).toFixed(1);
+        });
+
+        map.on('click', 'suburbs-project-ct', (e) => {
+            map.setFilter('suburbs-project-ct-highlight',
+                [
+                "all",
+                [
+                    "match",
+                    ["get", "ctuid"],
+                    [e.features[0].properties.ctuid],
+                    true,
+                    false
+                ]
+                ]
+            )           
+		});
+
+        map.on('click', 'suburbs-project-cma-fill', (e) => {
+            $: cmaSelected = cmaSummary.filter(item => item.cmauid === parseInt(e.features[0].properties.CMAUID))[0].cmaname;
+        })
+    });
 
     // function for what to do when new cma is selected
     function handleSelect(e) {
@@ -77,7 +157,7 @@
         let cmaX = filteredData.x;
         let cmaY = filteredData.y;
         let cmauid = filteredData.cmauid.toString();
-        
+
         //change data values based on cma selected
         selectedPop = (filteredData.pop2021);
         selectedActive = ((filteredData.active) * 100);
@@ -170,115 +250,20 @@
         }
     }
 
-    onMount(() => {
-        map = new mapboxgl.Map({
-            container: 'map', 
-            style: 'mapbox://styles/schoolofcities/cli0otj3n04m601pa9s0s0mc4',
-            center: [-97, 55], 
-            zoom: 3,
-            maxZoom: 14,
-            minZoom: 2,
-            scrollZoom: true,
-            attributionControl: false
-        });
-
-        map.on('load', function () {
-            map.addLayer({
-            id: 'cmaPoints',
-            type: 'circle',
-            source: {
-                type: 'geojson',
-                data: cmaPoints
-            },
-            paint: {
-                'circle-radius': 6,
-                'circle-color': '#AB1368',
-                'circle-stroke-width': 2,
-                'circle-stroke-color': '#fff'
-            }
-            });
-        });
-
-        map.on('zoom', function () {
-          if (map.getZoom() < 5) {
-            map.setLayoutProperty('cmaPoints', 'visibility', 'visible');
-          } else {
-            map.setLayoutProperty('cmaPoints', 'visibility', 'none');
-          }
-        });
-
-        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-        const scale = new mapboxgl.ScaleControl({
-            maxWidth: 100,
-            unit: 'metric'
-            });
-
-        map.addControl(scale, 'bottom-right');
-
-        // Mouse functions
-        map.on('mouseenter', 'suburbs-project-ct', () => {
-            map.getCanvas().style.cursor = 'pointer';
-        });
-
-        map.on('mouseleave', 'suburbs-project-ct', () => {
-            map.getCanvas().style.cursor = '';
-        });
-
-        map.on('click' , 'suburbs-project-ct' , (e) => {
-            selectedCtuid = e.features[0].properties.ctuid;
-            selectedClass = e.features[0].properties.class;
-            selectedCtPop = (e.features[0].properties.pop2021);
-            selectedPercActive = ((e.features[0].properties.active)*100).toFixed(1);
-            selectedPercTransit = ((e.features[0].properties.transit)*100).toFixed(1);
-            selectedPercAuto = ((e.features[0].properties.auto)*100).toFixed(1);
-        });
-
-        map.on('click', 'suburbs-project-ct', (e) => {
-            map.setFilter('suburbs-project-ct-highlight',
-                [
-                "all",
-                [
-                    "match",
-                    ["get", "ctuid"],
-                    [e.features[0].properties.ctuid],
-                    true,
-                    false
-                ]
-                ]
-            )           
-		});
-
-        map.on('click', 'suburbs-project-cma-fill', (e) => {
-            $: cmaSelected = cmaSummary.filter(item => item.cmauid === parseInt(e.features[0].properties.CMAUID))[0].cmaname;
-        })
-    });
-
+    
     let isChecked = false;
-
-    
-    
- 
-  function toggleCheckbox() {
- 	isChecked = !isChecked;
- 	if (isChecked) {
-        map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.42);
-        map.setPaintProperty('mapbox-satellite', 'raster-opacity', 1.00);
- 	} 
-    else {
-        map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.7);
-        map.setPaintProperty('mapbox-satellite', 'raster-opacity', 0);
-    }
+    function toggleCheckbox() {
+        isChecked = !isChecked;
+        if (isChecked) {
+            map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.42);
+            map.setPaintProperty('mapbox-satellite', 'raster-opacity', 1.00);
+        } 
+        else {
+            map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.7);
+            map.setPaintProperty('mapbox-satellite', 'raster-opacity', 0);
+        }
     };
-
-
-
-
-    function reset() {
-        cmaX = '';
-        cmaY = '';
-        cmaSelected = '';
-    }
+    
  
   
 </script>
