@@ -342,10 +342,10 @@
             <div class="bar"></div>
 
             <p>
-                Mapping where and how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. 
+                Mapping where and how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a> (David Gordon et al.) 
             </p>
             <p>    
-                Select below or click on the map to view a specific Census Metropolitan Area.
+                Select below or click on the map to view a specific Census Metropolitan Area (CMA).
             </p>
 
             <div class="bar"></div>
