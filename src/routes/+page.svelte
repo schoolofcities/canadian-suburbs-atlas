@@ -8,6 +8,12 @@
 
 	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2w2Z2xhOXprMTYzczNlcHNjMnNvdGlmNCJ9.lOgVHrajc1L-LlU0as2i2A';
 
+    let isContentVisible = true; // This variable will track whether the content is visible or not
+
+    function toggleContent() {
+        isContentVisible = !isContentVisible; // Toggle the visibility state
+    }
+
     let cmaPoints;
 
     // Convert JSON data to GeoJSON format
@@ -26,8 +32,6 @@
         }))
     }
 
-
-    $: console.log(cmaPoints);
 
     // array of all cma names
     let cmaAll = cmaSummary
@@ -171,9 +175,9 @@
             container: 'map', 
             style: 'mapbox://styles/schoolofcities/cli0otj3n04m601pa9s0s0mc4',
             center: [-97, 55], 
-            zoom: 4,
+            zoom: 3,
             maxZoom: 14,
-            minZoom: 3,
+            minZoom: 2,
             scrollZoom: true,
             attributionControl: false
         });
@@ -187,8 +191,8 @@
                 data: cmaPoints
             },
             paint: {
-                'circle-radius': 5,
-                'circle-color': '#1E3765',
+                'circle-radius': 6,
+                'circle-color': '#AB1368',
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#fff'
             }
@@ -291,7 +295,7 @@
 
         <h1>Canadian Suburbs Atlas</h1>
 
-            <div id="content-wrapper">
+            <div id="content-wrapper" style="display: {isContentVisible ? 'block' : 'none'};">
             <div class="bar"></div>
 
             <p>
@@ -385,7 +389,9 @@
 
         </div>
 
-        <div id="hide">^ Hide Information ^</div>
+        <div id="hide" on:click={toggleContent}>
+            {isContentVisible ? "Click here to hide this panel" : "Click here to show details about this project"}
+        </div>
 
     </div>
 
@@ -412,12 +418,6 @@
 		height: 100%;
         
 	}
-
-    #test {
-        position: relative;
-        top: 700px;
-        left: 1160px;
-    }
     
 	#map {
 		height: 100%;
@@ -495,14 +495,24 @@
     }
 
     #box {
-        /* display: none; */
         opacity: 1;
     }
 
-    #reset {
-        position: absolute;
-        top: 15px;
-        left: 260px;
+
+    #hide {
+        font-family: Roboto;
+        font-size: 12px;
+        height: 18px;
+        text-align: center;
+        background-color: none;
+        border-top: solid 1px lightgrey;
+        opacity: 0.98;
+        color: var(--brandMedBlue);
+    }
+
+    #hide:hover {
+        background-color: var(--brandYellow);
+        cursor: pointer;
     }
 
 </style>
