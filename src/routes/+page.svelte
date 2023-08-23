@@ -438,7 +438,8 @@
 
     p {
         font-size: 12px;
-        font-family: Roboto;
+        font-family: RobotoRegular;
+        line-height: 15px;
         margin: 0px;
         padding: 0px;
         padding-left: 10px;
@@ -454,7 +455,6 @@
 
     #content {
         width: 300px;
-        /* height: 460px; */
         position: absolute;
         top: 5px;
         left: 5px;
@@ -494,7 +494,7 @@
     }
 
     .legend-text {
-        font-family: Roboto;
+        font-family: RobotoRegular;
         fill: var(--brandGray80);
     }
 
@@ -504,12 +504,13 @@
 
 
     #hide {
-        font-family: Roboto;
+        font-family: RobotoRegular;
         font-size: 12px;
         height: 18px;
         text-align: center;
         background-color: none;
         border-top: solid 1px lightgrey;
+        padding-top: 3px;
         opacity: 0.98;
         color: var(--brandMedBlue);
     }
