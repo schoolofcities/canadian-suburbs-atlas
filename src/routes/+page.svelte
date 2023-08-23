@@ -5,6 +5,9 @@
     import Select from 'svelte-select';
 	import '../assets/global-styles.css';
 
+    import transitLines from './data/transit-lines-canada.geo.json';
+    import transitStops from './data/transit-stops-canada.geo.json';
+
 	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2w2Z2xhOXprMTYzczNlcHNjMnNvdGlmNCJ9.lOgVHrajc1L-LlU0as2i2A';
 
     // for toggling the visibility of the panel
@@ -89,6 +92,50 @@
             }
             });
         });
+
+        map.on('load', function () {
+            map.addLayer({
+            id: 'transitStops',
+            type: 'circle',
+            source: {
+                type: 'geojson',
+                data: transitStops
+            },
+            paint: {
+                'circle-radius': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    5, 0,
+                    6, 1,
+                    20, 10
+                ],
+                'circle-color': '#AB1368',
+            }
+            }, 'suburbs-project-cma-fill');
+        });
+
+        map.on('load', function () {
+            map.addLayer({
+            id: 'transitLines',
+            type: 'line',
+            source: {
+                type: 'geojson',
+                data: transitLines
+            },
+            paint: {
+                'line-width': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    5, 0,
+                    6, 1,
+                ],
+                'line-color': '#AB1368',
+            }
+            }, 'suburbs-project-cma-fill');
+        });
+
 
         map.on('zoom', function () {
           if (map.getZoom() < 5) {
@@ -501,7 +548,6 @@
     #box {
         opacity: 1;
     }
-
 
     #hide {
         font-family: RobotoRegular;
