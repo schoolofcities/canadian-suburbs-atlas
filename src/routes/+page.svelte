@@ -86,7 +86,7 @@
             },
             paint: {
                 'circle-radius': 6,
-                'circle-color': '#AB1368',
+                'circle-color': '#1E3765',
                 'circle-stroke-width': 2,
                 'circle-stroke-color': '#fff'
             }
@@ -345,7 +345,7 @@
                 Mapping where and how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. 
             </p>
             <p>    
-                Select to view a specific Census Metropolitan Area.
+                Select below or click on the map to view a specific Census Metropolitan Area.
             </p>
 
             <div class="bar"></div>
@@ -409,6 +409,11 @@
                 <p>
                     <input type="checkbox" on:change={toggleCheckbox}>
                     Satellite View
+                    <svg width="30" height="15" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="8" y1="10" x2="30" y2="10" stroke="#AB1368" stroke-width="1"/>
+                        <circle cx="19" cy="10" r="3" fill="#AB1368"/>
+                    </svg>
+                    Major Transit Line
                 </p>
             </div>
 
