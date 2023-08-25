@@ -3,11 +3,15 @@
 	<head>
 
 		<meta charset="utf-8" />
-		<link rel="icon" href="%sveltekit.assets%/favicon.svg" />
+		<link rel="icon" href="./favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 		<title>Canadian Suburbs Atlas | School of Cities</title>
-		%sveltekit.head%
+		
+		<link rel="modulepreload" href="./_app/immutable/entry/start.be8abe1e.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/index.91390c25.js">
+		<link rel="modulepreload" href="./_app/immutable/chunks/singletons.3d50575f.js">
+		<link rel="modulepreload" href="./_app/immutable/entry/app.f5844dfe.js">
 
 		<meta name="description" content="Canada is a suburban nation. More than two-thirds of our country’s total population live in suburbs. This interactive map uses 2021 census data to show where, and to what extent, people live in the suburbs of Canadian cities.">
 		<meta name="author" content="Jeff Allen">
@@ -28,6 +32,25 @@
 
 	</head>
 	<body data-sveltekit-preload-data="hover">
-		<div style="display: contents">%sveltekit.body%</div>
+		<div style="display: contents">
+			<script>
+				{
+					__sveltekit_g13fa7 = {
+						assets: "/canadian-suburbs-atlas",
+						base: new URL(".", location).pathname.slice(0, -1),
+						env: {}
+					};
+
+					const element = document.currentScript.parentElement;
+
+					Promise.all([
+						import("./_app/immutable/entry/start.be8abe1e.js"),
+						import("./_app/immutable/entry/app.f5844dfe.js")
+					]).then(([kit, app]) => {
+						kit.start(app, element);
+					});
+				}
+			</script>
+		</div>
 	</body>
 </html>
