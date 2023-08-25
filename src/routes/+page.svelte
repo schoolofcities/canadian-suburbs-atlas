@@ -5,7 +5,33 @@
     import Select from 'svelte-select';
 	import '../assets/global-styles.css';
 
+    import transitLines from './data/transit-lines-canada.geo.json';
+    import transitStops from './data/transit-stops-canada.geo.json';
+
 	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2w2Z2xhOXprMTYzczNlcHNjMnNvdGlmNCJ9.lOgVHrajc1L-LlU0as2i2A';
+
+    // for toggling the visibility of the panel
+    let isContentVisible = true;
+    function toggleContent() {
+        isContentVisible = !isContentVisible;
+    }
+
+    // creating a geojson for points of CMAs (when zoomed out)
+    let cmaPoints;
+    cmaPoints = {
+        type: 'FeatureCollection',
+        features: cmaSummary.filter(feature => feature.cmauid !== "000").map(feature => ({
+        type: 'Feature',
+        geometry: {
+            type: 'Point',
+            coordinates: [feature.x, feature.y]
+        },
+        properties: {
+            cmauid: feature.cmauid,
+            cmaname: feature.cmaname
+        }
+        }))
+    }
 
     // array of all cma names
     let cmaAll = cmaSummary
@@ -21,22 +47,163 @@
         
     // initial cma selected
 	let cmaSelected = 'All CMAs';
-    let selectedPop = 15000000;
-    let selectedActive = 0;
-    let selectedTransit = 0;
-    let selectedAuto = 100;
-    let selectedExurban = 0;
-    let selectedUnclassified = 0;
-    $: selectedUnclassified = (100 - selectedActive - selectedTransit - selectedAuto - selectedExurban).toFixed(2);
+    let selectedPop = 27281056;
+    let selectedActive = 13.6;
+    let selectedTransit = 11.1;
+    let selectedAuto = 67.3;
+    let selectedExurban = 8.0;
+    let selectedUnclassified = 0.0;
 
-    // create map variable to fill in with onMount
+    // empty selected ctuid variables
     let selectedCtuid = '';
     let selectedClass = '';
     let selectedCtPop = ''
     let selectedPercActive =''
     let selectedPercTransit =''
     let selectedPercAuto = ''
-    let ctuid = '0';
+
+    
+
+    onMount(() => {
+        map = new mapboxgl.Map({
+            container: 'map', 
+            style: 'mapbox://styles/schoolofcities/cli0otj3n04m601pa9s0s0mc4',
+            center: [-97, 55], 
+            zoom: 3,
+            maxZoom: 14,
+            minZoom: 2,
+            scrollZoom: true,
+            attributionControl: false
+        });
+
+        map.on('load', function () {
+            map.addLayer({
+            id: 'cmaPoints',
+            type: 'circle',
+            source: {
+                type: 'geojson',
+                data: cmaPoints
+            },
+            paint: {
+                'circle-radius': 6,
+                'circle-color': '#1E3765',
+                'circle-stroke-width': 2,
+                'circle-stroke-color': '#fff'
+            }
+            });
+        });
+
+        map.on('load', function () {
+            map.addLayer({
+            id: 'transitStops',
+            type: 'circle',
+            source: {
+                type: 'geojson',
+                data: transitStops
+            },
+            paint: {
+                'circle-radius': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    5, 0,
+                    6, 1,
+                    20, 10
+                ],
+                'circle-color': '#AB1368',
+            }
+            }, 'suburbs-project-cma-fill');
+        });
+
+        map.on('load', function () {
+            map.addLayer({
+            id: 'transitLines',
+            type: 'line',
+            source: {
+                type: 'geojson',
+                data: transitLines
+            },
+            paint: {
+                'line-width': [
+                    'interpolate',
+                    ['linear'],
+                    ['zoom'],
+                    5, 0,
+                    6, 1,
+                ],
+                'line-color': '#AB1368',
+            }
+            }, 'suburbs-project-cma-fill');
+        });
+
+
+        map.on('zoom', function () {
+          if (map.getZoom() < 5) {
+            map.setLayoutProperty('cmaPoints', 'visibility', 'visible');
+          } else {
+            map.setLayoutProperty('cmaPoints', 'visibility', 'none');
+          }
+        });
+
+        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
+        const scale = new mapboxgl.ScaleControl({
+            maxWidth: 100,
+            unit: 'metric'
+            });
+
+        map.addControl(scale, 'bottom-right');
+
+        // Mouse functions
+        map.on('mouseenter', 'suburbs-project-ct', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'suburbs-project-ct', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
+        map.on('mouseenter', 'cmaPoints', () => {
+            map.getCanvas().style.cursor = 'pointer';
+        });
+
+        map.on('mouseleave', 'cmaPoints', () => {
+            map.getCanvas().style.cursor = '';
+        });
+
+        map.on('click' , 'suburbs-project-ct' , (e) => {
+            selectedCtuid = e.features[0].properties.ctuid;
+            selectedClass = e.features[0].properties.class;
+            selectedCtPop = (e.features[0].properties.pop2021);
+            selectedPercActive = ((e.features[0].properties.active)*100).toFixed(1);
+            selectedPercTransit = ((e.features[0].properties.transit)*100).toFixed(1);
+            selectedPercAuto = ((e.features[0].properties.auto)*100).toFixed(1);
+        });
+
+        map.on('click', 'suburbs-project-ct', (e) => {
+            map.setFilter('suburbs-project-ct-highlight',
+                [
+                "all",
+                [
+                    "match",
+                    ["get", "ctuid"],
+                    [e.features[0].properties.ctuid],
+                    true,
+                    false
+                ]
+                ]
+            )           
+		});
+
+        map.on('click', 'suburbs-project-cma-fill', (e) => {
+            $: cmaSelected = cmaSummary.filter(item => item.cmauid === parseInt(e.features[0].properties.CMAUID))[0].cmaname;
+        })
+
+        map.on('click', 'cmaPoints', (e) => {
+            console.log(e.features[0]);
+            $: cmaSelected = e.features[0].properties.cmaname;
+        })
+    });
 
 
     // function for what to do when new cma is selected
@@ -51,13 +218,14 @@
         let cmaX = filteredData.x;
         let cmaY = filteredData.y;
         let cmauid = filteredData.cmauid.toString();
-        
+
         //change data values based on cma selected
         selectedPop = (filteredData.pop2021);
-        selectedActive = ((filteredData.active) * 100).toFixed(1);
-        selectedTransit = ((filteredData.transit) * 100).toFixed(1);
-        selectedAuto = ((filteredData.auto) * 100).toFixed(1);
-        selectedExurban = ((filteredData.exurban) * 100).toFixed(1);
+        selectedActive = ((filteredData.active) * 100);
+        selectedTransit = ((filteredData.transit) * 100);
+        selectedAuto = ((filteredData.auto) * 100);
+        selectedExurban = ((filteredData.exurban) * 100);
+        selectedUnclassified = ((filteredData.unclassified) * 100);
 
         // pan and zoom to the new cma - reset pitch and bearing if they changed
         if (cmaSelected !== "All CMAs") {
@@ -143,91 +311,19 @@
         }
     }
 
-    onMount(() => {
-        map = new mapboxgl.Map({
-            container: 'map', 
-            style: 'mapbox://styles/schoolofcities/cli0otj3n04m601pa9s0s0mc4',
-            center: [-97, 55], 
-            zoom: 4,
-            maxZoom: 14,
-            minZoom: 3,
-            scrollZoom: true,
-            attributionControl: false
-        });
-
-        map.addControl(new mapboxgl.NavigationControl(), 'top-right');
-
-        const scale = new mapboxgl.ScaleControl({
-            maxWidth: 100,
-            unit: 'metric'
-            });
-
-        map.addControl(scale, 'bottom-right');
-
-        // Mouse functions
-        map.on('mouseenter', 'suburbs-project-ct', () => {
-            map.getCanvas().style.cursor = 'pointer';
-        });
-
-        map.on('mouseleave', 'suburbs-project-ct', () => {
-            map.getCanvas().style.cursor = '';
-        });
-
-        map.on('click' , 'suburbs-project-ct' , (e) => {
-            selectedCtuid = e.features[0].properties.ctuid;
-            selectedClass = e.features[0].properties.class;
-            selectedCtPop = (e.features[0].properties.pop2021);
-            selectedPercActive = ((e.features[0].properties.active)*100).toFixed(1);
-            selectedPercTransit = ((e.features[0].properties.transit)*100).toFixed(1);
-            selectedPercAuto = ((e.features[0].properties.auto)*100).toFixed(1);
-
-        });
-
-        map.on('click', 'suburbs-project-ct', (e) => {		
-
-			var features = map.queryRenderedFeatures(e.point, { layers: ['suburbs-project-ct'] });
-
-			if (ctuid != features[0].properties.ctuid) {
-				var style = [
-					"match",
-					["get", "ctuid"],
-					[features[0].properties.ctuid],
-					"#6D247A",
-					"#fff",
-				]
-				map.setPaintProperty('suburbs-project-ct', 'fill-outline-color', style)
-				ctuid = features[0].properties.ctuid
-			} 
-		});
-
-        map.setPaintProperty ('suburbs-project-cma' , 'fill-color' , 'red');
-
-    });
-
     let isChecked = false;
-
-    
-    
- 
-  function toggleCheckbox() {
- 	isChecked = !isChecked;
- 	if (isChecked) {
-        map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.42);
-        map.setPaintProperty('mapbox-satellite', 'raster-opacity', 1.00);
- 	} 
-    else {
-        map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.7);
-        map.setPaintProperty('mapbox-satellite', 'raster-opacity', 0);
-    }
+    function toggleCheckbox() {
+        isChecked = !isChecked;
+        if (isChecked) {
+            map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.42);
+            map.setPaintProperty('mapbox-satellite', 'raster-opacity', 1.00);
+        } 
+        else {
+            map.setPaintProperty('suburbs-project-ct', 'fill-opacity', 0.7);
+            map.setPaintProperty('mapbox-satellite', 'raster-opacity', 0);
+        }
     };
-
-function reset() {
-    cmaX = '';
-    cmaY = '';
-    cmaSelected = '';
-}
- 
-  
+    
 </script>
 
 
@@ -242,96 +338,120 @@ function reset() {
 
         <h1>Canadian Suburbs Atlas</h1>
 
-        <div class="bar"></div>
+            <div id="content-wrapper" style="display: {isContentVisible ? 'block' : 'none'};">
+            <div class="bar"></div>
 
-        <p>
-            This map visualizes how suburbanized Canadian cities are. Read about the methods <a href="https://www.canadiansuburbs.ca/research-papers/">here</a>. Select below to view a map and stats for a specific Census Metropolitan Area (CMA).
-        </p>
+            <p>
+                Canada is a suburban nation. More than two-thirds of our country’s total population live in suburbs. While downtowns may be full of condo towers, there is four times as much
+                population growth on the suburban edges of the regions. This Atlas uses the recently released 2021 census data to update previous research studies and map  where and how many people live in the suburbs of Canadian cities. 
+            </p>
+            
+            <p>Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a> (David Gordon et al.) 
+            </p>
 
-        <div class="bar"></div>
+           <br> 
+           
+            <p>    
+                Select below or click on the map to view a specific Census Metropolitan Area (CMA).
+            </p>
 
-        <Select 
-            items={cmaAll} 
-            value={cmaSelected} 
-            clearable={false} 
-            showChevron={true} 
-            on:input={handleSelect}
-            --background="white"
-            --height="20px"
-            --item-color="black"
-            --border-radius="0"
-            --border="1px"
-            --list-border-radius="0px"
-            --font-size="15px"
-            --max-height="30px"
-            --item-is-active-color="black"
-            --item-is-active-bg="lightgrey"
-        />
+            <div class="bar"></div>
 
-        <div class="bar"></div>
+            <div id="select-wrapper">
+                <Select 
+                    id="select"
+                    items={cmaAll} 
+                    value={cmaSelected} 
+                    clearable={false} 
+                    showChevron={true} 
+                    on:input={handleSelect}
+                    --background="white"
+                    --height="20px"
+                    --item-color="black"
+                    --border-radius="0"
+                    --border="1px"
+                    --list-border-radius="0px"
+                    --font-size="15px"
+                    --max-height="30px"
+                    --item-is-active-color="black"
+                    --item-is-active-bg="lightgrey"
+                />
+            </div>
 
-        <div id="legend-wrapper">
-            <svg id="legend"  width="300" height="130">
-                
-                <text x="10" y="20" class="legend-text" font-size="12" >Population (2021): {selectedPop.toLocaleString()}</text>
+            <div class="bar"></div>
+            <div id="legend-wrapper">
+                <svg id="legend"  width="300" height="130">
+                    
+                    <text x="10" y="20" class="legend-text" font-size="12" >Population (2021): {selectedPop.toLocaleString()}</text>
 
-                <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
-                <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
+                    <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
+                    <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
+                        
+                    <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="50" width="15" height="15" fill="#00A189" />
+                    <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
 
-                <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="50" width="15" height="15" fill="#00A189" />
-                <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
+                    <rect class="legend-bar" x="30" y="70" width="{250 * selectedAuto / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="70" width="15" height="15" fill="#F1C500" />
+                    <text x="30" y="82" class="legend-text" font-size="12" >Auto Suburb: <tspan font-weight="bold">{selectedAuto.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedAuto / 100).toLocaleString()} people)</text>
 
-                <rect class="legend-bar" x="30" y="70" width="{250 * selectedAuto / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="70" width="15" height="15" fill="#F1C500" />
-                <text x="30" y="82" class="legend-text" font-size="12" >Auto Suburb: <tspan font-weight="bold">{selectedAuto}%</tspan> ({Math.round(selectedPop * selectedAuto / 100).toLocaleString()} people)</text>
+                    <rect class="legend-bar" x="30" y="90" width="{200 * selectedExurban / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="90" width="15" height="15" fill="#f7f2df" />
+                    <text x="30" y="102" class="legend-text" font-size="12" >Exurb: <tspan font-weight="bold">{selectedExurban.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedExurban / 100).toLocaleString()} people)</text>
 
-                <rect class="legend-bar" x="30" y="90" width="{200 * selectedExurban / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="90" width="15" height="15" fill="#f7f2df" />
-                <text x="30" y="102" class="legend-text" font-size="12" >Exurb: <tspan font-weight="bold">{selectedExurban}%</tspan> ({Math.round(selectedPop * selectedExurban / 100).toLocaleString()} people)</text>
+                    <rect class="legend-bar" x="30" y="110" width="{200 * selectedUnclassified / 100}" height="15"/>
+                    <rect class="legend-box" x="10" y="110" width="15" height="15" fill="#D0D1C9" />
+                    <text x="30" y="122" class="legend-text" font-size="12" >Unclassified / No Data: <tspan font-weight="bold">{selectedUnclassified.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedUnclassified / 100).toLocaleString()} people)</text>
 
-                <rect class="legend-bar" x="30" y="110" width="{200 * selectedUnclassified / 100}" height="15"/>
-                <rect class="legend-box" x="10" y="110" width="15" height="15" fill="#D0D1C9" />
-                <text x="30" y="122" class="legend-text" font-size="12" >Unclassified / No Data: <tspan font-weight="bold">{selectedUnclassified}%</tspan> ({Math.round(selectedPop * selectedUnclassified / 100).toLocaleString()} people)</text>
+                </svg>
+            </div>
 
-            </svg>
+            <div class="bar"></div>
+
+
+
+            <div id="satellite-switch">
+                <p>
+                    <input type="checkbox" on:change={toggleCheckbox}>
+                    Satellite View
+                    <svg width="30" height="15" xmlns="http://www.w3.org/2000/svg">
+                        <line x1="8" y1="10" x2="30" y2="10" stroke="#AB1368" stroke-width="1"/>
+                        <circle cx="19" cy="10" r="3" fill="#AB1368"/>
+                    </svg>
+                    Major Transit Line
+                </p>
+            </div>
+
+            <div class="bar"></div>
+
+            <div id="box">
+                <p>
+                    Selected Census Tract: {selectedCtuid}
+                    <br>
+                    Classification: <b>{selectedClass}</b>
+                    <br>
+                    Population (2021): {parseInt(selectedCtPop).toLocaleString()}
+                    <br>
+                    Mode Share (Journey to Work):
+                    <br>
+                    Active: {selectedPercActive}% |
+                    Transit: {selectedPercTransit}% |
+                    Auto: {selectedPercAuto}%  
+                </p>
         </div>
 
         <div class="bar"></div>
 
-
-
-        <div id="satellite-switch">
             <p>
-                <input type="checkbox" on:change={toggleCheckbox}>
-                Satellite View
+                This map was built by Remus Herteg and Jeff Allen at the School of Cities. Code is on <a>GitHub</a>
             </p>
+
         </div>
 
-        <div class="bar"></div>
-
-        <div id="box">
-            <p>
-                Selected Census Tract: {selectedCtuid}
-                <br>
-                Classification: <b>{selectedClass}</b>
-                <br>
-                Population (2021): {parseInt(selectedCtPop).toLocaleString()}
-                <br>
-                Mode Share (Journey to Work):
-                <br>
-                Active: {selectedPercActive}% |
-                Transit: {selectedPercTransit}% |
-                Auto: {selectedPercAuto}%  
-            </p>
-       </div>
-
-       <div class="bar"></div>
-
-       <p>
-            This map was built by Remus Herteg and Jeff Allen at the School of Cities. Code is on <a>GitHub</a>
-        </p>
+        <div id="hide" on:click={toggleContent}>
+            {isContentVisible ? "Click here to hide this panel" : "Click here to show details about this map"}
+        </div>
 
     </div>
 
@@ -348,7 +468,7 @@ function reset() {
 		margin: 0px;
 		background-color: var(--brandDarkBlue);
 	}
-	
+    
     main {
 		margin: auto 0px;
         padding: 0px;
@@ -356,12 +476,6 @@ function reset() {
 		height: 100%;
         
 	}
-
-    #test {
-        position: relative;
-        top: 700px;
-        left: 1160px;
-    }
     
 	#map {
 		height: 100%;
@@ -382,7 +496,8 @@ function reset() {
 
     p {
         font-size: 12px;
-        font-family: Roboto;
+        font-family: RobotoRegular;
+        line-height: 15px;
         margin: 0px;
         padding: 0px;
         padding-left: 10px;
@@ -398,7 +513,6 @@ function reset() {
 
     #content {
         width: 300px;
-        /* height: 460px; */
         position: absolute;
         top: 5px;
         left: 5px;
@@ -418,6 +532,10 @@ function reset() {
         opacity: 0.25;
     }
 
+    #select-wrapper:hover {
+        cursor: pointer;
+    }
+
     #legend {
         background-color: white;
     }
@@ -434,19 +552,64 @@ function reset() {
     }
 
     .legend-text {
-        font-family: Roboto;
+        font-family: RobotoRegular;
         fill: var(--brandGray80);
     }
 
     #box {
-        /* display: none; */
         opacity: 1;
     }
 
-    #reset {
+    #hide {
+        font-family: RobotoRegular;
+        font-size: 12px;
+        height: 18px;
+        text-align: center;
+        background-color: none;
+        border-top: solid 1px lightgrey;
+        padding-top: 3px;
+        opacity: 0.98;
+        color: var(--brandMedBlue);
+    }
+
+    #hide:hover {
+        background-color: var(--brandYellow);
+        cursor: pointer;
+    }
+
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px 0;
         position: absolute;
-        top: 15px;
-        left: 260px;
+        z-index: 1;
+        top: -5px;
+        left: 110%;
+    }
+
+    .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        margin-top: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent black transparent transparent;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
     }
 
 </style>
