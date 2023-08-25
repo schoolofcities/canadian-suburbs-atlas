@@ -459,7 +459,7 @@
 	:global(body) {
 		padding: 0px;
 		margin: 0px;
-		background-color: var(--brandDarkBlue);
+		background-color: white;
 	}
     
     main {
