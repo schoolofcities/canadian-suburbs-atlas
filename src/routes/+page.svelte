@@ -342,8 +342,15 @@
             <div class="bar"></div>
 
             <p>
-                Mapping where and how many people live in the suburbs in Canadian cities. Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a> (David Gordon et al.) 
+                Canada is a suburban nation. More than two-thirds of our country’s total population live in suburbs. While downtowns may be full of condo towers, there is four times as much
+                population growth on the suburban edges of the regions. This Atlas uses the recently released 2021 census data to update previous research studies and map  where and how many people live in the suburbs of Canadian cities. 
             </p>
+            
+            <p>Read about how neighbourhoods were classified <a href="https://www.canadiansuburbs.ca/research-papers/">here</a> (David Gordon et al.) 
+            </p>
+
+           <br> 
+           
             <p>    
                 Select below or click on the map to view a specific Census Metropolitan Area (CMA).
             </p>
@@ -372,7 +379,6 @@
             </div>
 
             <div class="bar"></div>
-
             <div id="legend-wrapper">
                 <svg id="legend"  width="300" height="130">
                     
@@ -381,7 +387,7 @@
                     <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
                     <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
                     <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
-
+                        
                     <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
                     <rect class="legend-box" x="10" y="50" width="15" height="15" fill="#00A189" />
                     <text x="30" y="62" class="legend-text" font-size="12" >Transit Suburb: <tspan font-weight="bold">{selectedTransit.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedTransit / 100).toLocaleString()} people)</text>
@@ -569,6 +575,41 @@
     #hide:hover {
         background-color: var(--brandYellow);
         cursor: pointer;
+    }
+
+    .tooltip {
+        position: relative;
+        display: inline-block;
+        border-bottom: 1px dotted black;
+    }
+
+    .tooltip .tooltiptext {
+        visibility: hidden;
+        width: 120px;
+        background-color: black;
+        color: #fff;
+        text-align: center;
+        border-radius: 6px;
+        padding: 5px 0;
+        position: absolute;
+        z-index: 1;
+        top: -5px;
+        left: 110%;
+    }
+
+    .tooltip .tooltiptext::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        right: 100%;
+        margin-top: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: transparent black transparent transparent;
+    }
+
+    .tooltip:hover .tooltiptext {
+        visibility: visible;
     }
 
 </style>
