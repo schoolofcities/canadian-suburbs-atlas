@@ -342,7 +342,7 @@
             <div class="bar"></div>
 
             <p>
-                Canada is a suburban nation. More than two-thirds of our country’s total population live in suburbs. This interactive map uses 2021 census data to show where and how many people live in the suburbs of Canadian cities. This research was led by <a href="https://www.queensu.ca/geographyandplanning/people/gordon-david">Dr. David Gordon</a>. More information about this research, including how neighbourhoods were classified as being suburban, can be found on the <a href="https://www.canadiansuburbs.ca/research-papers/">Canadian Suburbs website</a>.
+                Canada is a suburban nation. More than two-thirds of our country’s total population live in suburbs. This interactive map uses 2021 census data to show where, and to what extent, people live in the suburbs of Canadian cities. This research was led by <a href="https://www.queensu.ca/geographyandplanning/people/gordon-david">Dr. David Gordon</a>. More information about this research, including about neighbourhoods were classified as being suburban, can be found on the <a href="https://www.canadiansuburbs.ca/research-papers/">Canadian Suburbs website</a>.
             </p>           
             <p>    
                 To explore, select below or click on the map to view a specific Census Metropolitan Area (CMA).
