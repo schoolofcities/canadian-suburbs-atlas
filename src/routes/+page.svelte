@@ -8,7 +8,7 @@
     import transitLines from './data/transit-lines-canada.geo.json';
     import transitStops from './data/transit-stops-canada.geo.json';
 
-	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2w2Z2xhOXprMTYzczNlcHNjMnNvdGlmNCJ9.lOgVHrajc1L-LlU0as2i2A';
+	mapboxgl.accessToken = 'pk.eyJ1Ijoic2Nob29sb2ZjaXRpZXMiLCJhIjoiY2xsd2V4YW1lMG9hYTNjcGp2OTY4bjlyMyJ9.0t1bvhluL1vVwhBSQ4bKWA';
 
     // for toggling the visibility of the panel
     let isContentVisible = true;
