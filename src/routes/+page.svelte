@@ -378,7 +378,7 @@
                     <text x="10" y="20" class="legend-text" font-size="12" >Population (2021): {selectedPop.toLocaleString()}</text>
 
                     <rect class="legend-bar" x="30" y="30" width="{200 * selectedActive / 100}" height="15"/>
-                    <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#8DBF2E" />
+                    <rect class="legend-box" x="10" y="30" width="15" height="15" fill="#0D534D" />
                     <text x="30" y="42" class="legend-text" font-size="12" >Active Core: <tspan font-weight="bold">{selectedActive.toFixed(1)}%</tspan> ({Math.round(selectedPop * selectedActive / 100).toLocaleString()} people)</text>
                         
                     <rect class="legend-bar" x="30" y="50" width="{200 * selectedTransit / 100}" height="15"/>
